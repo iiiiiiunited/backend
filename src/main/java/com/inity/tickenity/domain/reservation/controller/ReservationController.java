@@ -3,6 +3,7 @@ package com.inity.tickenity.domain.reservation.controller;
 import com.inity.tickenity.domain.common.dto.PageResponseDto;
 import com.inity.tickenity.domain.reservation.dto.reqeust.ReservationCreateRequestDto;
 import com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse;
+import com.inity.tickenity.domain.reservation.dto.response.ReservationDetailResponseDto;
 import com.inity.tickenity.domain.reservation.dto.response.ReservationIdResponseDto;
 import com.inity.tickenity.domain.reservation.service.ReservationService;
 import com.inity.tickenity.global.response.BaseResponse;
@@ -37,5 +38,12 @@ public class ReservationController {
         Long userId = (Long) httpServletRequest.getAttribute("userId");
 
         return BaseResponse.success(reservationService.getMyReservation(userId, page - 1, size), ResultCode.OK);
+    }
+
+    @GetMapping("/{reservationId}")
+    public BaseResponse<ReservationDetailResponseDto> getDetailReservation(
+            @PathVariable Long reservationId
+    ) {
+        return BaseResponse.success(reservationService.getDetailReservation(reservationId), ResultCode.OK);
     }
 }
