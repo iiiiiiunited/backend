@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -49,11 +48,11 @@ public class AuthService {
         return new SignupResponse(bearerToken);
     }
 
+    @Transactional(readOnly = true)
     public SigninResponse signin(SigninRequest signinRequest) {
         User user = userRepository.findByEmail(signinRequest.email()).orElseThrow(
                 () -> new BusinessException(ResultCode.NOT_FOUND, "가입되지 않은 유저입니다."));
 
-        // 로그인 시 이메일과 비밀번호가 일치하지 않을 경우 401을 반환합니다.
         if (!passwordEncoder.matches(signinRequest.password(), user.getPassword())) {
             throw new BusinessException(ResultCode.LOGIN_FAILED);
         }
