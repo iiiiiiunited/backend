@@ -16,7 +16,7 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
 
     public List<ScheduleResponseDto> getSchedulesByConcert(Long concertId) {
-        List<Schedule> schedules = scheduleRepository.findByConcertId(concertId);
+        List<Schedule> schedules = scheduleRepository.findAllByConcertId(concertId);
         return schedules.stream()
                 .map(s -> new ScheduleResponseDto(s.getId(), s.getStartTime(), s.getEndTime()))
                 .toList();
