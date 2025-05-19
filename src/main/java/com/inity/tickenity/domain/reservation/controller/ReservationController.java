@@ -12,8 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/reservations")
 @RequiredArgsConstructor
@@ -45,5 +43,13 @@ public class ReservationController {
             @PathVariable Long reservationId
     ) {
         return BaseResponse.success(reservationService.getDetailReservation(reservationId), ResultCode.OK);
+    }
+
+    @PatchMapping("/{reservationId}")
+    public BaseResponse<Void> cancelReservation(
+            @PathVariable Long reservationId
+    ) {
+        reservationService.cancelReservation(reservationId);
+        return BaseResponse.success(ResultCode.NO_CONTENT);
     }
 }

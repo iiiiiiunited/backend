@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,14 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Reservation 을 생성
+     *
+     * @param userId
+     * @param reservationCreateRequestDto
+     * @return ReservationIdResponseDto 
+     */
+    @Transactional
     public ReservationIdResponseDto createReservation(
             Long userId,
             ReservationCreateRequestDto reservationCreateRequestDto
@@ -39,6 +48,14 @@ public class ReservationService {
         return ReservationIdResponseDto.of(saved.getId());
     }
 
+    /**
+     * 로그인한 유저의 예매 내역을 모두 조회
+     *
+     * @param userId
+     * @param page
+     * @param size
+     * @return PageResponseDto, 페이징으로 예매 내역 조회
+     */
     public PageResponseDto<MyReservationResponse> getMyReservation(
             Long userId,
             int page,
@@ -52,8 +69,26 @@ public class ReservationService {
         return PageResponseDto.toDto(pageReservation);
     }
 
-    // 일단은 예매 등록일과 수정일로 StartDate 와 EndDate 를 대체한다.
+    /**
+     * 단건 예매 조회
+     *
+     * @param reservationId
+     * @return ReservationDetailResponseDto
+     */
+    // Concert 의 StartDate 와 EndDate 를 예매 등록일과 수정일로 대체한다.
     public ReservationDetailResponseDto getDetailReservation(Long reservationId) {
         return reservationRepository.findByReservationWithDto(reservationId);
+    }
+
+    /**
+     * 예약 취소
+     *
+     * @param reservationId
+     */
+    @Transactional
+    public void cancelReservation(Long reservationId) {
+        // 예약 상태만 예약 취소 상태로 바꿀 것이다.
+        Reservation reservation = reservationRepository.findByIdOrElseThrow(reservationId);
+        reservation.updateStatusToCancelled();
     }
 }

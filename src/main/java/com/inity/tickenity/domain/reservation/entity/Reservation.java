@@ -48,4 +48,9 @@ public class Reservation extends BaseTimeEntity {
 //        this.ConcertSchedule = concertSchedule;
 //        this.SeatInformation = seatInformation;
     }
+
+    // Reservation Status 수정
+    public void updateStatusToCancelled() {
+        this.reservationStatus = ReservationStatus.CANCELLED;
+    }
 }
