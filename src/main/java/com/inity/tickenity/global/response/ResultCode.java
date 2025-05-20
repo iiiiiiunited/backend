@@ -21,6 +21,7 @@ public enum ResultCode {
 
     /* 인증, 인가 */
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "아이디(로그인 이메일) 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요."),
+    AUTH_ANNOTATION_USER_MISMATCH(HttpStatus.UNAUTHORIZED, "@Auth와 AuthUser 타입은 함께 사용되어야 합니다."),
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "Access Denied."),
     WITHDRAWN_USER_ACCESS(HttpStatus.FORBIDDEN, "탈퇴한 유저는 접근할 수 없습니다."),
