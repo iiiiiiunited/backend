@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.inity.tickenity.domain.venue.dto.CreateVenueRequestDto;
 import com.inity.tickenity.domain.venue.dto.VenueResponseDto;
 import com.inity.tickenity.domain.venue.service.VenueService;
+import com.inity.tickenity.global.response.BaseResponse;
+import com.inity.tickenity.global.response.ResultCode;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +24,12 @@ public class VenueController {
 	private final VenueService venueService;
 
 	@PostMapping("/venues")
-	public ResponseEntity<Long> createVenue(@Valid @RequestBody CreateVenueRequestDto req) {
-
-		return ResponseEntity.ok(venueService.createVenue(req));
+	public BaseResponse<Long> createVenue(@Valid @RequestBody CreateVenueRequestDto req) {
+		return BaseResponse.success(venueService.createVenue(req), ResultCode.CREATED);
 	}
 
 	@GetMapping("/concert/{concertId}/venues")
-	public ResponseEntity<List<VenueResponseDto>> readVenues(@PathVariable long concertId) {
-		return ResponseEntity.ok(venueService.readVenueWithConcert(concertId));
+	public BaseResponse<List<VenueResponseDto>> readVenues(@PathVariable long concertId) {
+		return BaseResponse.success(venueService.readVenueWithConcert(concertId), ResultCode.OK);
 	}
 }

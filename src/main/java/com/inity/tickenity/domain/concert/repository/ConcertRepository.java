@@ -1,7 +1,6 @@
 package com.inity.tickenity.domain.concert.repository;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,14 +8,14 @@ import org.springframework.data.repository.query.Param;
 import com.inity.tickenity.domain.common.repository.BaseRepository;
 import com.inity.tickenity.domain.concert.entity.Concert;
 import com.inity.tickenity.domain.concert.enums.Genre;
+import com.inity.tickenity.domain.concertvenue.ConcertVenue;
 
 public interface ConcertRepository extends BaseRepository<Concert, Long> {
 	List<Concert> findAllByGenre(Genre genre);
 
-
-	@Query("SELECT c FROM Concert c " +
-		"LEFT JOIN FETCH c.concertVenues cv " +
-		"LEFT JOIN FETCH cv.venue " +
-		"WHERE c.id = :id")
-	Optional<Concert> findByIdWithVenues(@Param("id") Long id);
+	@Query("SELECT cv FROM ConcertVenue cv " +
+		"JOIN FETCH cv.concert c " +
+		"JOIN FETCH cv.venue v " +
+		"WHERE c.id = :concertId")
+	List<ConcertVenue> findAllByConcertIdWithVenue(@Param("concertId") Long concertId);
 }

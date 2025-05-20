@@ -47,9 +47,6 @@ public class Concert {
 	@Column(nullable = false, name = "post_url")
 	private String postUrl;
 
-	@OneToMany(mappedBy = "concert", fetch = FetchType.LAZY)
-	private List<ConcertVenue> concertVenues = new ArrayList<>();
-
 	public Concert(String title, String ageRating, int duration, Genre genre, String description, String postUrl) {
 		this.title = title;
 		this.ageRating = ageRating;

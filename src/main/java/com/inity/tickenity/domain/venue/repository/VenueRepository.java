@@ -10,8 +10,9 @@ import com.inity.tickenity.domain.concert.entity.Concert;
 import com.inity.tickenity.domain.venue.entity.Venue;
 
 public interface VenueRepository extends BaseRepository<Venue, Long> {
-	@Query("SELECT v FROM Venue v " +
-		"JOIN FETCH v.concertVenues cv " +
-		"WHERE cv.concert = :concert")
+	@Query("SELECT cv FROM ConcertVenue cv " +
+	"JOIN FETCH cv.venue v " +
+	"JOIN FETCH cv.concert c " +
+	"WHERE c.id = :concertId")
 	List<Venue> findAllByConcert(@Param("concert") Concert concert);
 }

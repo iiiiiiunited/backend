@@ -11,11 +11,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.inity.tickenity.domain.common.annotation.Auth;
+import com.inity.tickenity.domain.common.dto.AuthUser;
 import com.inity.tickenity.domain.concert.dto.ConcertResponseDto;
 import com.inity.tickenity.domain.concert.dto.ConcertWithGenreResponseDto;
 import com.inity.tickenity.domain.concert.dto.RequestConcert;
 import com.inity.tickenity.domain.concert.enums.Genre;
 import com.inity.tickenity.domain.concert.service.ConcertService;
+import com.inity.tickenity.global.response.BaseResponse;
+import com.inity.tickenity.global.response.ResultCode;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,18 +31,18 @@ public class ConcertController {
 	private final ConcertService concertService;
 
 	@PostMapping
-	public ResponseEntity<Long> postConcert(@Valid @RequestBody RequestConcert req) {
+	public BaseResponse<Long> postConcert(@Valid @RequestBody RequestConcert req) {
 		Long concertId = concertService.postConcert(req);
-		return ResponseEntity.ok(concertId);
+		return BaseResponse.success(concertId, ResultCode.CREATED);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<ConcertWithGenreResponseDto>> readConcertsByGenre(@RequestParam Genre genre) {
-		return ResponseEntity.ok(concertService.readConcertsByGenre(genre));
+	public BaseResponse<List<ConcertWithGenreResponseDto>> readConcertsByGenre(@RequestParam Genre genre) {
+		return BaseResponse.success(concertService.readConcertsByGenre(genre), ResultCode.OK);
 	}
 
 	@GetMapping("/{concertId}")
-	public ResponseEntity<ConcertResponseDto> readConcert(@PathVariable Long concertId) {
-		return ResponseEntity.ok(concertService.readConcert(concertId));
+	public BaseResponse<ConcertResponseDto> readConcert(@PathVariable Long concertId) {
+		return BaseResponse.success(concertService.readConcert(concertId), ResultCode.OK);
 	}
 }
