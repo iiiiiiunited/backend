@@ -1,5 +1,6 @@
 # Custom
 .env
+.env.*
 
 db/mysql/data
 db/redis/data
