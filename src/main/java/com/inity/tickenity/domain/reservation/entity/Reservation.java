@@ -3,6 +3,8 @@ package com.inity.tickenity.domain.reservation.entity;
 import com.inity.tickenity.domain.common.entity.BaseTimeEntity;
 import com.inity.tickenity.domain.reservation.enums.PaymentStatus;
 import com.inity.tickenity.domain.reservation.enums.ReservationStatus;
+import com.inity.tickenity.domain.schedule.entity.Schedule;
+import com.inity.tickenity.domain.seat.entity.SeatInformation;
 import com.inity.tickenity.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -29,7 +31,6 @@ public class Reservation extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 추후에 연관관계 설정
     @OneToOne
     @JoinColumn(name = "seat_id", unique = true)
     private SeatInformation seatInformation;
@@ -38,16 +39,14 @@ public class Reservation extends BaseTimeEntity {
     @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;
 
-
     // Builder
     @Builder
-    public Reservation(User user, Schedule schedule, Long seatInformationId) {
+    public Reservation(User user, Schedule schedule, SeatInformation seatInformation) {
         this.user = user;
         this.reservationStatus = ReservationStatus.PENDING;
         this.paymentStatus = PaymentStatus.PENDING;
-        // 추후에 변경
         this.schedule = schedule;
-//        this.SeatInformation = seatInformation;
+        this.seatInformation = seatInformation;
     }
 
     // Reservation Status 수정
