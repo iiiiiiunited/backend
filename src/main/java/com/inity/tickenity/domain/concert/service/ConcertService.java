@@ -1,6 +1,5 @@
 package com.inity.tickenity.domain.concert.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
