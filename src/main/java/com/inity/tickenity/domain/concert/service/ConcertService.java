@@ -4,11 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.inity.tickenity.domain.concert.dto.ConcertResponseDto;
+import com.inity.tickenity.domain.concert.dto.ConcertWithGenreResponseDto;
 import com.inity.tickenity.domain.concert.dto.RequestConcert;
 import com.inity.tickenity.domain.concert.entity.Concert;
+import com.inity.tickenity.domain.concert.enums.Genre;
 import com.inity.tickenity.domain.concert.repository.ConcertRepository;
+import com.inity.tickenity.domain.concertvenue.ConcertVenue;
+import com.inity.tickenity.domain.concertvenue.ConcertVenueRepository;
+import com.inity.tickenity.domain.venue.entity.Venue;
+import com.inity.tickenity.domain.venue.repository.VenueRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,22 +23,54 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ConcertService {
 	private final ConcertRepository concertRepository;
+	private final VenueRepository venueRepository;
+	private final ConcertVenueRepository concertVenueRepository;
 
+	@Transactional
 	public Long postConcert(RequestConcert req) {
-		return concertRepository.save(req.fromDto(req)).getId();
-	}
 
-	public List<ConcertResponseDto> readConcertsByGenre(String genre) {
-		List<Concert> concerts = concertRepository.findByGenre(genre);
-		List<ConcertResponseDto> responseDtos = new ArrayList<>();
-		for(Concert concert : concerts) {
-			responseDtos.add(ConcertResponseDto.toDto(concert));
+		Concert concert = req.fromDto();
+		concertRepository.save(concert);
+
+		List<Venue> venues = venueRepository.findAllById(req.venueIds());
+
+		if(isDuplicated(req.venueIds())) {
+			throw new IllegalArgumentException("중복된 venue ID가 포함되어 있습니다.");
 		}
-		return responseDtos;
+
+		if (isExistingVenue(venues.size(), req.venueIds())) {
+			throw new IllegalArgumentException("요청한 venue 중 존재하지 않는 ID가 있습니다.");
+		}
+
+		for (Venue venue : venues) {
+			ConcertVenue concertVenue = new ConcertVenue(concert, venue);
+			concertVenueRepository.save(concertVenue);
+		}
+
+		return concert.getId();
 	}
 
+	@Transactional(readOnly = true)
+	public List<ConcertWithGenreResponseDto> readConcertsByGenre(Genre genre) {
+		List<Concert> concerts = concertRepository.findAllByGenre(genre);
+
+		return concerts.stream()
+			.map(ConcertWithGenreResponseDto::toDto)
+			.toList();
+	}
+
+	@Transactional(readOnly = true)
 	public ConcertResponseDto readConcert(long id) {
-		Concert concert = concertRepository.findById(id).orElseThrow();
+		Concert concert = concertRepository.findByIdWithVenues(id).orElseThrow();
 		return ConcertResponseDto.toDto(concert);
+	}
+
+	private boolean isDuplicated(List<Long> ids) {
+		long distinctCount = ids.stream().distinct().count();
+		return ids.size() != distinctCount;
+	}
+
+	private boolean isExistingVenue(int venuesSize, List<Long> ids) {
+		return venuesSize != ids.size();
 	}
 }
