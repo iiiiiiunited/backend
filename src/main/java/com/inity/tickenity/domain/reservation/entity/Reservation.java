@@ -3,8 +3,6 @@ package com.inity.tickenity.domain.reservation.entity;
 import com.inity.tickenity.domain.common.entity.BaseTimeEntity;
 import com.inity.tickenity.domain.reservation.enums.PaymentStatus;
 import com.inity.tickenity.domain.reservation.enums.ReservationStatus;
-import com.inity.tickenity.domain.schedule.entity.Schedule;
-import com.inity.tickenity.domain.seat.entity.SeatInformation;
 import com.inity.tickenity.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -43,12 +41,12 @@ public class Reservation extends BaseTimeEntity {
 
     // Builder
     @Builder
-    public Reservation(User user, Long scheduleId, Long seatInformationId) {
+    public Reservation(User user, Schedule schedule, Long seatInformationId) {
         this.user = user;
         this.reservationStatus = ReservationStatus.PENDING;
         this.paymentStatus = PaymentStatus.PENDING;
         // 추후에 변경
-//        this.ConcertSchedule = concertSchedule;
+        this.schedule = schedule;
 //        this.SeatInformation = seatInformation;
     }
 
