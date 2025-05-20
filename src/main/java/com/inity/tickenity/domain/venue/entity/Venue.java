@@ -37,9 +37,6 @@ public class Venue {
 	@Column(nullable = false)
 	private String description;
 
-	@OneToMany(mappedBy = "venue", fetch = FetchType.LAZY)
-	private List<ConcertVenue> concertVenues = new ArrayList<>();
-
 	public Venue(String address, String name, int capacity, String description) {
 		this.address = address;
 		this.name = name;

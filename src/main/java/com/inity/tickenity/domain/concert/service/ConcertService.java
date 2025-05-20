@@ -60,8 +60,12 @@ public class ConcertService {
 
 	@Transactional(readOnly = true)
 	public ConcertResponseDto readConcert(long id) {
-		Concert concert = concertRepository.findByIdWithVenues(id).orElseThrow();
-		return ConcertResponseDto.toDto(concert);
+		List<ConcertVenue> cvs = concertRepository.findAllByConcertIdWithVenue(id);
+		List<Venue> venues = cvs.stream()
+			.map(ConcertVenue::getVenue)
+			.toList();
+		Concert concert = concertRepository.findById(id).orElseThrow();
+		return ConcertResponseDto.toDto(concert, venues);
 	}
 
 	private boolean isDuplicated(List<Long> ids) {
