@@ -10,7 +10,6 @@ import com.inity.tickenity.domain.reservation.dto.response.ReservationIdResponse
 import com.inity.tickenity.domain.reservation.service.ReservationService;
 import com.inity.tickenity.global.response.BaseResponse;
 import com.inity.tickenity.global.response.ResultCode;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
