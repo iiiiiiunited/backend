@@ -21,7 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/concert")
+@RequestMapping("/concerts")
 @RequiredArgsConstructor
 public class ConcertController {
 	private final ConcertService concertService;
