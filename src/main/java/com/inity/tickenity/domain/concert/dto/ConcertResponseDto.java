@@ -1,23 +1,23 @@
 package com.inity.tickenity.domain.concert.dto;
 
+import java.util.List;
+
 import com.inity.tickenity.domain.concert.entity.Concert;
+import com.inity.tickenity.domain.concert.enums.Genre;
+import com.inity.tickenity.domain.venue.dto.VenueResponseDto;
 
 import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
-@Getter
-@RequiredArgsConstructor
 @Builder
-public class ConcertResponseDto {
-	private final long id;
-	private final String title;
-	private final String ageRating;
-	private final int duration;
-	private final String genre;
-	private final String description;
-	private final String postUrl;
-
+public record ConcertResponseDto(
+	long id,
+	String title,
+	String ageRating,
+	int duration,
+	Genre genre,
+	String description,
+	String postUrl
+) {
 	public static ConcertResponseDto toDto(Concert concert) {
 		return ConcertResponseDto.builder()
 			.id(concert.getId())

@@ -12,9 +12,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.inity.tickenity.domain.concert.dto.ConcertResponseDto;
+import com.inity.tickenity.domain.concert.dto.ConcertWithGenreResponseDto;
 import com.inity.tickenity.domain.concert.dto.RequestConcert;
+import com.inity.tickenity.domain.concert.enums.Genre;
 import com.inity.tickenity.domain.concert.service.ConcertService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,13 +27,13 @@ public class ConcertController {
 	private final ConcertService concertService;
 
 	@PostMapping
-	public ResponseEntity<Long> postConcert(@RequestBody RequestConcert req) {
+	public ResponseEntity<Long> postConcert(@Valid @RequestBody RequestConcert req) {
 		Long concertId = concertService.postConcert(req);
 		return ResponseEntity.ok(concertId);
 	}
 
 	@GetMapping
-	public ResponseEntity<List<ConcertResponseDto>> readConcertsByGenre(@RequestParam String genre) {
+	public ResponseEntity<List<ConcertWithGenreResponseDto>> readConcertsByGenre(@RequestParam Genre genre) {
 		return ResponseEntity.ok(concertService.readConcertsByGenre(genre));
 	}
 
