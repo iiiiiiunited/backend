@@ -71,3 +71,18 @@ jobs:
                       # Docker Hub에 푸시된 이미지를 가져와서 컨테이너 재시작
                       docker-compose -f docker-compose.prod.yml pull
                       docker-compose -f docker-compose.prod.yml up -d
+
+            # 배포 정상 완료 여부 체크
+            - name: Verify /health endpoint
+              run: |
+                  echo "Waiting for service on ${{ secrets.EC2_HOST }}:8081/health..."
+                  for i in $(seq 1 10); do
+                    if curl -sSf http://${{ secrets.EC2_HOST }}:8081/health; then
+                      echo "✅ Service is healthy!"
+                      exit 0
+                    fi
+                    echo "  attempt $i failed, retrying in 5s..."
+                    sleep 5
+                  done
+                  echo "❌ Health check failed."
+                  exit 1
