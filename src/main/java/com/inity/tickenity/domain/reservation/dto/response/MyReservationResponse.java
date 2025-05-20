@@ -13,18 +13,17 @@ public class MyReservationResponse {
 
     LocalDate reservationDate;
 
-//    String concertName;
-//
-//    String venueName;
+    String concertName;
+
+    String venueName;
 
     ReservationStatus reservationStatus;
 
-//    public MyReservationResponse(Long reservationId, LocalDateTime reservationDate, String concertName, String venueName, String reservationStatus) {
-    public MyReservationResponse(Long reservationId, LocalDateTime reservationDate, ReservationStatus reservationStatus) {
+    public MyReservationResponse(Long reservationId, LocalDateTime reservationDate, String concertName, String venueName, ReservationStatus reservationStatus) {
         this.reservationId = reservationId;
         this.reservationDate = reservationDate.toLocalDate();
-//        this.concertName = concertName;
-//        this.venueName = venueName;
+        this.concertName = concertName;
+        this.venueName = venueName;
         this.reservationStatus = reservationStatus;
     }
 }

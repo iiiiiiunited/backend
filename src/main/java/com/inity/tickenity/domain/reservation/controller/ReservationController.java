@@ -1,5 +1,7 @@
 package com.inity.tickenity.domain.reservation.controller;
 
+import com.inity.tickenity.domain.common.annotation.Auth;
+import com.inity.tickenity.domain.common.dto.AuthUser;
 import com.inity.tickenity.domain.common.dto.PageResponseDto;
 import com.inity.tickenity.domain.reservation.dto.reqeust.ReservationCreateRequestDto;
 import com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse;
@@ -8,7 +10,6 @@ import com.inity.tickenity.domain.reservation.dto.response.ReservationIdResponse
 import com.inity.tickenity.domain.reservation.service.ReservationService;
 import com.inity.tickenity.global.response.BaseResponse;
 import com.inity.tickenity.global.response.ResultCode;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,29 +21,35 @@ public class ReservationController {
 
     @PostMapping
     public BaseResponse<ReservationIdResponseDto> createReservation(
-            HttpServletRequest httpServletRequest,
+            @Auth AuthUser authUser,
             @RequestBody ReservationCreateRequestDto reservationCreateRequestDto
     ) {
-        Long userId = (Long) httpServletRequest.getAttribute("userId");
-        return BaseResponse.success(reservationService.createReservation(userId, reservationCreateRequestDto), ResultCode.CREATED);
+        return BaseResponse.success(
+                reservationService.createReservation(authUser.id(), reservationCreateRequestDto),
+                ResultCode.CREATED
+        );
     }
 
     @GetMapping
     public BaseResponse<PageResponseDto<MyReservationResponse>> getMyReservation(
-            HttpServletRequest httpServletRequest,
+            @Auth AuthUser authUser,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        Long userId = (Long) httpServletRequest.getAttribute("userId");
-
-        return BaseResponse.success(reservationService.getMyReservation(userId, page - 1, size), ResultCode.OK);
+        return BaseResponse.success(
+                reservationService.getMyReservation(authUser.id(), page - 1, size),
+                ResultCode.OK
+        );
     }
 
     @GetMapping("/{reservationId}")
     public BaseResponse<ReservationDetailResponseDto> getDetailReservation(
             @PathVariable Long reservationId
     ) {
-        return BaseResponse.success(reservationService.getDetailReservation(reservationId), ResultCode.OK);
+        return BaseResponse.success(
+                reservationService.getDetailReservation(reservationId),
+                ResultCode.OK
+        );
     }
 
     @PatchMapping("/{reservationId}")

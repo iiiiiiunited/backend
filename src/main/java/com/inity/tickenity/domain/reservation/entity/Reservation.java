@@ -31,7 +31,6 @@ public class Reservation extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 추후에 연관관계 설정
     @OneToOne
     @JoinColumn(name = "seat_id", unique = true)
     private SeatInformation seatInformation;
@@ -40,16 +39,14 @@ public class Reservation extends BaseTimeEntity {
     @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;
 
-
     // Builder
     @Builder
-    public Reservation(User user, Long scheduleId, Long seatInformationId) {
+    public Reservation(User user, Schedule schedule, SeatInformation seatInformation) {
         this.user = user;
         this.reservationStatus = ReservationStatus.PENDING;
         this.paymentStatus = PaymentStatus.PENDING;
-        // 추후에 변경
-//        this.ConcertSchedule = concertSchedule;
-//        this.SeatInformation = seatInformation;
+        this.schedule = schedule;
+        this.seatInformation = seatInformation;
     }
 
     // Reservation Status 수정
