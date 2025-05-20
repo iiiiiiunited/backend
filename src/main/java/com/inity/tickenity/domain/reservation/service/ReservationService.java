@@ -9,6 +9,8 @@ import com.inity.tickenity.domain.reservation.entity.Reservation;
 import com.inity.tickenity.domain.reservation.repository.ReservationRepository;
 import com.inity.tickenity.domain.schedule.entity.Schedule;
 import com.inity.tickenity.domain.schedule.repository.ScheduleRepository;
+import com.inity.tickenity.domain.seat.entity.SeatInformation;
+import com.inity.tickenity.domain.seat.repository.SeatInformationRepository;
 import com.inity.tickenity.domain.user.entity.User;
 import com.inity.tickenity.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
+    private final SeatInformationRepository seatInformationRepository;
 
     /**
      * Reservation 을 생성
@@ -40,11 +43,12 @@ public class ReservationService {
     ) {
         User findUser = userRepository.findByIdOrElseThrow(userId);
         Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId());
+        SeatInformation seatInformation = seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId());
 
         Reservation reservation = Reservation.builder()
                 .user(findUser)
                 .schedule(findSchedule)
-                .seatInformationId(reservationCreateRequestDto.seatInformationId())
+                .seatInformation(seatInformation)
                 .build();
 
         Reservation saved = reservationRepository.save(reservation);
