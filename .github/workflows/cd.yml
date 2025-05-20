@@ -43,6 +43,9 @@ jobs:
         runs-on: ubuntu-latest
         
         steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+              
             - name: EC2에 docker-compose.yml 업로드
               uses: appleboy/scp-action@v0.1.4
               with:
