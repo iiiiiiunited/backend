@@ -7,6 +7,8 @@ import com.inity.tickenity.domain.reservation.dto.response.ReservationDetailResp
 import com.inity.tickenity.domain.reservation.dto.response.ReservationIdResponseDto;
 import com.inity.tickenity.domain.reservation.entity.Reservation;
 import com.inity.tickenity.domain.reservation.repository.ReservationRepository;
+import com.inity.tickenity.domain.schedule.entity.Schedule;
+import com.inity.tickenity.domain.schedule.repository.ScheduleRepository;
 import com.inity.tickenity.domain.user.entity.User;
 import com.inity.tickenity.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,24 +24,26 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
+    private final ScheduleRepository scheduleRepository;
 
     /**
      * Reservation 을 생성
      *
      * @param userId
      * @param reservationCreateRequestDto
-     * @return ReservationIdResponseDto 
+     * @return ReservationIdResponseDto
      */
     @Transactional
     public ReservationIdResponseDto createReservation(
             Long userId,
             ReservationCreateRequestDto reservationCreateRequestDto
     ) {
-        User finduser = userRepository.findByIdOrElseThrow(userId);
+        User findUser = userRepository.findByIdOrElseThrow(userId);
+        Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId());
 
         Reservation reservation = Reservation.builder()
-                .user(finduser)
-                .scheduleId(reservationCreateRequestDto.scheduleId())
+                .user(findUser)
+                .schedule(findSchedule)
                 .seatInformationId(reservationCreateRequestDto.seatInformationId())
                 .build();
 
@@ -64,7 +68,7 @@ public class ReservationService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<MyReservationResponse> pageReservation = reservationRepository.findByUser_Id(userId, pageable);
+        Page<MyReservationResponse> pageReservation = reservationRepository.findAllByUserId(userId, pageable);
 
         return PageResponseDto.toDto(pageReservation);
     }
@@ -75,19 +79,18 @@ public class ReservationService {
      * @param reservationId
      * @return ReservationDetailResponseDto
      */
-    // Concert 의 StartDate 와 EndDate 를 예매 등록일과 수정일로 대체한다.
     public ReservationDetailResponseDto getDetailReservation(Long reservationId) {
         return reservationRepository.findByReservationWithDto(reservationId);
     }
 
     /**
      * 예약 취소
+     * 예약 상태만 예약 취소 상태로 변경
      *
      * @param reservationId
      */
     @Transactional
     public void cancelReservation(Long reservationId) {
-        // 예약 상태만 예약 취소 상태로 바꿀 것이다.
         Reservation reservation = reservationRepository.findByIdOrElseThrow(reservationId);
         reservation.updateStatusToCancelled();
     }
