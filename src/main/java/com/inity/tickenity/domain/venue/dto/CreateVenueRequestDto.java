@@ -3,7 +3,7 @@ package com.inity.tickenity.domain.venue.dto;
 import com.inity.tickenity.domain.venue.entity.Venue;
 import jakarta.validation.constraints.*;
 
-public record CreatingVenueRequestDto(
+public record CreateVenueRequestDto(
 	@NotBlank(message = "주소는 필수입니다.")
 	String address,
 
