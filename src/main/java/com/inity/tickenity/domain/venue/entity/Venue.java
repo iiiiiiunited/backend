@@ -3,10 +3,8 @@ package com.inity.tickenity.domain.venue.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.inity.tickenity.domain.concert.entity.Concert;
 import com.inity.tickenity.domain.concertvenue.ConcertVenue;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

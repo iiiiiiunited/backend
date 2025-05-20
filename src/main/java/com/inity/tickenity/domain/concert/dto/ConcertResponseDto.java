@@ -1,10 +1,7 @@
 package com.inity.tickenity.domain.concert.dto;
 
-import java.util.List;
-
 import com.inity.tickenity.domain.concert.entity.Concert;
 import com.inity.tickenity.domain.concert.enums.Genre;
-import com.inity.tickenity.domain.venue.dto.VenueResponseDto;
 
 import lombok.Builder;
 
