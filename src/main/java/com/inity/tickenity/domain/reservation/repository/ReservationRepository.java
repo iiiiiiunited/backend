@@ -13,8 +13,11 @@ import java.util.Set;
 
 public interface ReservationRepository extends BaseRepository<Reservation, Long> {
 
-    @Query("SELECT new com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse(r.id, r.createdAt, r.schedule.concert.title, v.name ,r.reservationStatus) " +
-            "FROM Reservation r JOIN FETCH Venue v WHERE r.user.id = :userId")
+    @Query("SELECT DISTINCT new com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse(r.id, r.createdAt, r.schedule.concert.title, v.name ,r.reservationStatus) " +
+            "FROM Reservation r " +
+            "JOIN ConcertVenue c ON c.concert.id = r.schedule.concert.id " +
+            "JOIN c.venue v " +
+            "WHERE r.user.id = :userId")
     Page<MyReservationResponse> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
 
     @Query("SELECT new com.inity.tickenity.domain.reservation.dto.response.ReservationDetailResponseDto(r.id, r.schedule.startTime, r.schedule.endTime, r.reservationStatus, r.paymentStatus) " +
