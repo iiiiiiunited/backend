@@ -14,21 +14,21 @@ import com.inity.tickenity.domain.venue.dto.CreatingVenueRequestDto;
 import com.inity.tickenity.domain.venue.dto.VenueResponseDto;
 import com.inity.tickenity.domain.venue.service.VenueService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/concert")
 public class VenueController {
 	private final VenueService venueService;
 
-	@PostMapping("/{concertId}/venues")
-	public ResponseEntity<Long> createVenue(@PathVariable long concertId, @RequestBody CreatingVenueRequestDto req) {
+	@PostMapping("/venues")
+	public ResponseEntity<Long> createVenue(@Valid @RequestBody CreatingVenueRequestDto req) {
 
-		return ResponseEntity.ok(venueService.createVenue(concertId, req));
+		return ResponseEntity.ok(venueService.createVenue(req));
 	}
 
-	@GetMapping("/{concertId}/venues")
+	@GetMapping("/concert/{concertId}/venues")
 	public ResponseEntity<List<VenueResponseDto>> readVenues(@PathVariable long concertId) {
 		return ResponseEntity.ok(venueService.readVenueWithConcert(concertId));
 	}
