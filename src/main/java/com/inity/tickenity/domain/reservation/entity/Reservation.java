@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(name = "reservations")
 public class Reservation extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,8 +32,8 @@ public class Reservation extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToOne
-    @JoinColumn(name = "seat_id", unique = true)
+    @ManyToOne
+    @JoinColumn(name = "seat_information_id")
     private SeatInformation seatInformation;
 
     @ManyToOne(fetch = FetchType.LAZY)
