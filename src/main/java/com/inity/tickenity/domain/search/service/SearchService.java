@@ -6,6 +6,7 @@ import com.inity.tickenity.domain.concert.repository.ConcertRepository;
 import com.inity.tickenity.domain.search.dto.response.SearchConcertResultResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class SearchService {
         );
     }
 
+    @Cacheable(value = "concertTitles", key = "#keyword")
     public PageResponseDto<SearchConcertResultResponse> findByKeywordWithCache(String keyword, Pageable pageable) {
 
         Page<Concert> pages = concertRepository.findByTitleContaining(keyword, pageable);
