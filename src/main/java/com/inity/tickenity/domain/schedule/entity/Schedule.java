@@ -1,7 +1,6 @@
 package com.inity.tickenity.domain.schedule.entity;
 
 import com.inity.tickenity.domain.concert.entity.Concert;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,4 +29,9 @@ public class Schedule {
     private LocalDateTime endTime;
 
 
+    public Schedule(Concert concert, LocalDateTime startTime, LocalDateTime endTime) {
+        this.concert = concert;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
 }
