@@ -1,6 +1,5 @@
 package com.inity.tickenity.domain.redisRock.aop;
 
-import com.inity.tickenity.domain.reservation.dto.reqeust.ReservationCreateRequestDto;
 
 import java.lang.annotation.*;
 
