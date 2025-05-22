@@ -2,6 +2,8 @@ package com.inity.tickenity.domain.concert.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -18,4 +20,6 @@ public interface ConcertRepository extends BaseRepository<Concert, Long> {
 		"JOIN FETCH cv.venue v " +
 		"WHERE c.id = :concertId")
 	List<ConcertVenue> findAllByConcertIdWithVenue(@Param("concertId") Long concertId);
+
+	Page<Concert> findByTitleContaining(String keyword, Pageable pageable);
 }
