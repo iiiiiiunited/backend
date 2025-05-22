@@ -28,7 +28,7 @@ public class VenueController {
 		return BaseResponse.success(venueService.createVenue(req), ResultCode.CREATED);
 	}
 
-	@GetMapping("/concert/{concertId}/venues")
+	@GetMapping("/concerts/{concertId}/venues")
 	public BaseResponse<List<VenueResponseDto>> readVenues(@PathVariable long concertId) {
 		return BaseResponse.success(venueService.readVenueWithConcert(concertId), ResultCode.OK);
 	}

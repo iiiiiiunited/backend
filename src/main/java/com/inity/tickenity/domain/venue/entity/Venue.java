@@ -43,4 +43,8 @@ public class Venue {
 		this.capacity = capacity;
 		this.description = description;
 	}
+
+	public void increaseCapacity() {
+		this.capacity++;
+	}
 }

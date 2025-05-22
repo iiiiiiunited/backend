@@ -4,6 +4,9 @@ import com.inity.tickenity.domain.common.repository.BaseRepository;
 import com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse;
 import com.inity.tickenity.domain.reservation.dto.response.ReservationDetailResponseDto;
 import com.inity.tickenity.domain.reservation.entity.Reservation;
+import com.inity.tickenity.domain.schedule.entity.Schedule;
+import com.inity.tickenity.domain.seat.entity.SeatInformation;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -34,6 +37,8 @@ public interface ReservationRepository extends BaseRepository<Reservation, Long>
     Set<String> findReservedSeatNumbers(@Param("scheduleId") Long scheduleId);
 
     boolean existsBySchedule_IdAndSeatInformation_Id(Long scheduleId, Long seatInformationId);
+
+    boolean existsByScheduleAndSeatInformation(Schedule schedule, SeatInformation seatInformation);
 
     long count();
 }

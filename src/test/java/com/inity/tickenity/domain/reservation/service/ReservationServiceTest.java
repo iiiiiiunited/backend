@@ -1,9 +1,13 @@
 package com.inity.tickenity.domain.reservation.service;
 
+import com.inity.tickenity.domain.common.dto.AuthUser;
 import com.inity.tickenity.domain.concert.entity.Concert;
 import com.inity.tickenity.domain.concert.enums.Genre;
 import com.inity.tickenity.domain.concert.repository.ConcertRepository;
+import com.inity.tickenity.domain.reservation.controller.ReservationController;
 import com.inity.tickenity.domain.reservation.dto.reqeust.ReservationCreateRequestDto;
+import com.inity.tickenity.domain.reservation.entity.Reservation;
+import com.inity.tickenity.domain.reservation.repository.ReservationRepository;
 import com.inity.tickenity.domain.schedule.entity.Schedule;
 import com.inity.tickenity.domain.schedule.repository.ScheduleRepository;
 import com.inity.tickenity.domain.seat.entity.SeatInformation;
@@ -20,12 +24,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@Disabled("임시로 비활성화")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// @Disabled("임시로 비활성화")
 @SpringBootTest
 class ReservationServiceTest {
 
@@ -41,9 +47,16 @@ class ReservationServiceTest {
     private VenueRepository venueRepository;
     @Autowired
     private ConcertRepository concertRepository;
+    @Autowired
+    private ReservationController reservationController;
+	@Autowired
+	private ReservationRepository reservationRepository;
 
-    @BeforeEach
+    @BeforeAll
     void setUp() {
+        userRepository.deleteAll();
+        reservationRepository.deleteAll();
+
         // 1. 장소 저장
         Venue venue = venueRepository.save(new Venue("address", "name", 45, "tt"));
         // 2. 콘서트 저장
@@ -54,11 +67,12 @@ class ReservationServiceTest {
         seatInformationRepository.save(new SeatInformation(venue, SeatGradeType.VIP, "A1"));
         // 5. 유저 정보 저장
         IntStream.range(0, 1000).forEach(i -> {
-            userRepository.save(new User(i + "test@test.com", "pwd", "test", "000-0000-0000", UserRole.USER));
+            String id = UUID.randomUUID().toString();
+            userRepository.save(new User(id+ "@email.com", "pwd", "test", "000-0000-0000", UserRole.USER));
         });
     }
 
-    @Disabled("임시로 비활성화")
+    // @Disabled("임시로 비활성화")
     @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - Callable")
     @Test
     void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrently() throws InterruptedException {
@@ -68,11 +82,13 @@ class ReservationServiceTest {
         // ---------------------------
         ReservationCreateRequestDto reservationCreateRequestDto = new ReservationCreateRequestDto(1L, 1L);
 
-        ExecutorService executor = Executors.newFixedThreadPool(16);
+        ExecutorService executor = Executors.newFixedThreadPool(1000);
 
+        System.out.println("AA" + reservationRepository.findAll().size());
         List<Callable<Void>> tasks = IntStream.range(0, 1000)
                 .mapToObj(i -> (Callable<Void>) () -> {
-                    reservationService.createReservation((long) i + 1, reservationCreateRequestDto);
+                    AuthUser authUser = new AuthUser((long) i, i + "test@test.com", UserRole.USER);
+                    reservationController.createReservation(authUser, reservationCreateRequestDto);
                     return null;
                 }).collect(Collectors.toList());
 
@@ -86,10 +102,12 @@ class ReservationServiceTest {
         // then: 성공한 예약은 정확히 1건이어야 함
         // 지금은 실패
         // ---------------------------
+        System.out.println();
+        System.out.println(reservationRepository.findAll().size());
         Assertions.assertEquals(1L, reservationService.countReservation());
     }
 
-    @Disabled("임시로 비활성화")
+    // @Disabled("임시로 비활성화")
     @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - CountDownLatch")
     @Test
     void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrentlyWithCountDownLatch() throws InterruptedException {
@@ -100,7 +118,7 @@ class ReservationServiceTest {
         // ---------------------------
         ReservationCreateRequestDto reservationCreateRequestDto = new ReservationCreateRequestDto(1L, 1L);
 
-        ExecutorService executor = Executors.newFixedThreadPool(16);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
         int tryCount = 1000;
 
         AtomicInteger successCount = new AtomicInteger();

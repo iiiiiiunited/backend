@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "seat_grade_prices")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class SeatGradePrice {
 
     @Id
@@ -28,4 +28,9 @@ public class SeatGradePrice {
     @Column(nullable = false)
     private SeatGradeType grade;
 
+    public SeatGradePrice(Concert concert, int price, SeatGradeType grade) {
+        this.concert = concert;
+        this.price = price;
+        this.grade = grade;
+    }
 }

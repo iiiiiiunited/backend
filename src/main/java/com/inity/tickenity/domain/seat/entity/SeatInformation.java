@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "seat_informations")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class SeatInformation {
 
     @Id

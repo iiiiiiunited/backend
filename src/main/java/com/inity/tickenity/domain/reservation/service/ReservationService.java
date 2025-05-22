@@ -1,6 +1,10 @@
 package com.inity.tickenity.domain.reservation.service;
 
+import java.time.Duration;
+import java.util.UUID;
+
 import com.inity.tickenity.domain.common.dto.PageResponseDto;
+import com.inity.tickenity.domain.reservation.aop.RedisLock;
 import com.inity.tickenity.domain.reservation.dto.reqeust.ReservationCreateRequestDto;
 import com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse;
 import com.inity.tickenity.domain.reservation.dto.response.ReservationDetailResponseDto;
@@ -13,14 +17,19 @@ import com.inity.tickenity.domain.seat.entity.SeatInformation;
 import com.inity.tickenity.domain.seat.repository.SeatInformationRepository;
 import com.inity.tickenity.domain.user.entity.User;
 import com.inity.tickenity.domain.user.repository.UserRepository;
+import com.inity.tickenity.domain.venue.entity.Venue;
 import com.inity.tickenity.global.exception.BusinessException;
 import com.inity.tickenity.global.response.ResultCode;
 import lombok.RequiredArgsConstructor;
+
+import org.redisson.api.RedissonClient;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -32,6 +41,12 @@ public class ReservationService {
     private final ScheduleRepository scheduleRepository;
     private final SeatInformationRepository seatInformationRepository;
 
+
+    private final RedissonClient redissonClient;
+    private final RedisTemplate<String, String> redisTemplate;
+
+    private static final String LOCK_KEY = "counterLock";
+
     /**
      * Reservation 을 생성
      *
@@ -39,7 +54,9 @@ public class ReservationService {
      * @param reservationCreateRequestDto
      * @return ReservationIdResponseDto
      */
+    // @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Transactional
+    @RedisLock(keyPrefix = "lock:reservation")
     public ReservationIdResponseDto createReservation(
             Long userId,
             ReservationCreateRequestDto reservationCreateRequestDto
@@ -47,8 +64,11 @@ public class ReservationService {
         User findUser = userRepository.findByIdOrElseThrow(userId);
         Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId());
         SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId());
-
-        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+        //
+        // if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+        //     throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
+        // }
+        if(reservationRepository.existsByScheduleAndSeatInformation(findSchedule, findSeatInformation)){
             throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
         }
 
