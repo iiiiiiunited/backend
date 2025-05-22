@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "seat_information")
+@Table(name = "seat_informations")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SeatInformation {
@@ -29,4 +29,9 @@ public class SeatInformation {
     @Column(name = "number", nullable = false)
     private String number;
 
+    public SeatInformation(Venue venue, SeatGradeType grade, String number) {
+        this.venue = venue;
+        this.grade = grade;
+        this.number = number;
+    }
 }
