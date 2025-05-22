@@ -1,0 +1,8 @@
+services:
+    app:
+        image: ncookie99/tickenity-api:latest
+        container_name: tickenity-api
+        ports:
+            - "8081:8080"   # Other server using 8080 port
+        env_file:
+            - .env
