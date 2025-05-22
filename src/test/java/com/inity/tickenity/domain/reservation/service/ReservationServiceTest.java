@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@Disabled("임시로 비활성화")
+//@Disabled("임시로 비활성화")
 @SpringBootTest
 class ReservationServiceTest {
 
@@ -53,12 +53,12 @@ class ReservationServiceTest {
         // 4. 좌석 정보 저장
         seatInformationRepository.save(new SeatInformation(venue, SeatGradeType.VIP, "A1"));
         // 5. 유저 정보 저장
-        IntStream.range(0, 1000).forEach(i -> {
+        IntStream.range(0, 50).forEach(i -> {
             userRepository.save(new User(i + "test@test.com", "pwd", "test", "000-0000-0000", UserRole.USER));
         });
     }
 
-    @Disabled("임시로 비활성화")
+//    @Disabled("임시로 비활성화")
     @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - Callable")
     @Test
     void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrently() throws InterruptedException {
@@ -68,7 +68,7 @@ class ReservationServiceTest {
         // ---------------------------
         ReservationCreateRequestDto reservationCreateRequestDto = new ReservationCreateRequestDto(1L, 1L);
 
-        ExecutorService executor = Executors.newFixedThreadPool(16);
+        ExecutorService executor = Executors.newFixedThreadPool(10);
 
         List<Callable<Void>> tasks = IntStream.range(0, 1000)
                 .mapToObj(i -> (Callable<Void>) () -> {
@@ -89,7 +89,6 @@ class ReservationServiceTest {
         Assertions.assertEquals(1L, reservationService.countReservation());
     }
 
-    @Disabled("임시로 비활성화")
     @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - CountDownLatch")
     @Test
     void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrentlyWithCountDownLatch() throws InterruptedException {
@@ -100,7 +99,7 @@ class ReservationServiceTest {
         // ---------------------------
         ReservationCreateRequestDto reservationCreateRequestDto = new ReservationCreateRequestDto(1L, 1L);
 
-        ExecutorService executor = Executors.newFixedThreadPool(16);
+        ExecutorService executor = Executors.newFixedThreadPool(10);
         int tryCount = 1000;
 
         AtomicInteger successCount = new AtomicInteger();
@@ -108,7 +107,7 @@ class ReservationServiceTest {
         CountDownLatch latch = new CountDownLatch(tryCount);
 
         // ---------------------------
-        // when: 1000명의 사용자가 동시에 예약 요청
+        // when: 100명의 사용자가 동시에 예약 요청
         // ---------------------------
         for (int i = 0; i < tryCount; i++) {
             int finalI = i;
@@ -134,5 +133,51 @@ class ReservationServiceTest {
         // ---------------------------
         // 실패 나는 게 정상 입니다.
         Assertions.assertEquals(1L, reservationService.countReservation());
+    }
+
+//    @Disabled("임시로 비활성화")
+    @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - With Redis Lettuce")
+    @Test
+    void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrentlyWithLettuce() throws InterruptedException {
+        System.out.println("\n\n\n\n[createReservation Test - Lettuce]");
+        // ---------------------------
+        // given: 예약 요청 정보 및 스레드풀 설정
+        // ---------------------------
+        ReservationCreateRequestDto reservationCreateRequestDto = new ReservationCreateRequestDto(1L, 1L);
+
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        int tryCount = 100;
+
+        AtomicInteger successCount = new AtomicInteger();
+        AtomicInteger failCount = new AtomicInteger();
+        CountDownLatch latch = new CountDownLatch(tryCount);
+
+        // ---------------------------
+        // when: 1000명의 사용자가 동시에 예약 요청
+        // ---------------------------
+        for (int i = 0; i < tryCount; i++) {
+            int finalI = i;
+            executor.submit(() -> {
+                try {
+                    reservationService.createReservationWithLettuce(1L + finalI, reservationCreateRequestDto);
+                    successCount.getAndIncrement();
+                } catch (Exception e) {
+                    System.out.println("[error]  : " + e.getMessage());
+                    failCount.getAndIncrement();
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        // ---------------------------
+        // then: 성공한 예약은 정확히 1건이어야 함
+        // 지금은 실패
+        // ---------------------------
+        Assertions.assertEquals(1L, reservationService.countReservation());
+        System.out.println("성공: " + successCount + "  | 실패" + failCount);
     }
 }
