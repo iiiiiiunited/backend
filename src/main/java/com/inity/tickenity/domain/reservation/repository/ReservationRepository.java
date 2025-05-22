@@ -32,4 +32,8 @@ public interface ReservationRepository extends BaseRepository<Reservation, Long>
     WHERE r.schedule.id = :scheduleId AND r.reservationStatus = 'RESERVED'
     """)
     Set<String> findReservedSeatNumbers(@Param("scheduleId") Long scheduleId);
+
+    boolean existsBySchedule_IdAndSeatInformation_Id(Long scheduleId, Long seatInformationId);
+
+    long count();
 }

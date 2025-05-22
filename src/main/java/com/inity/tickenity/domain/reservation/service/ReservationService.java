@@ -13,7 +13,10 @@ import com.inity.tickenity.domain.seat.entity.SeatInformation;
 import com.inity.tickenity.domain.seat.repository.SeatInformationRepository;
 import com.inity.tickenity.domain.user.entity.User;
 import com.inity.tickenity.domain.user.repository.UserRepository;
+import com.inity.tickenity.global.exception.BusinessException;
+import com.inity.tickenity.global.response.ResultCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,16 +46,19 @@ public class ReservationService {
     ) {
         User findUser = userRepository.findByIdOrElseThrow(userId);
         Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId());
-        SeatInformation seatInformation = seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId());
+        SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId());
+
+        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+            throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
+        }
 
         Reservation reservation = Reservation.builder()
                 .user(findUser)
                 .schedule(findSchedule)
-                .seatInformation(seatInformation)
+                .seatInformation(findSeatInformation)
                 .build();
 
         Reservation saved = reservationRepository.save(reservation);
-
         return ReservationIdResponseDto.of(saved.getId());
     }
 
@@ -97,5 +103,14 @@ public class ReservationService {
     public void cancelReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findByIdOrElseThrow(reservationId);
         reservation.updateStatusToCancelled();
+    }
+
+    /**
+     * Reservation 카운트 해주는 메서드
+     */
+    public void countReservation() {
+        System.out.println("\n\n\n====================\n");
+        System.out.println(reservationRepository.count());
+        System.out.println("\n====================\n\n\n");
     }
 }
