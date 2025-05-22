@@ -120,22 +120,42 @@ public class ReservationService {
     }
 
     // Lettuce 저장
-    @Transactional
     public void createReservationWithLettuce(
             Long userId,
             ReservationCreateRequestDto reservationCreateRequestDto
     ) {
         String key = "lock:" + reservationCreateRequestDto.scheduleId() + reservationCreateRequestDto.seatInformationId();
         String value = userId.toString();
+
+        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+        boolean locked = false;
         try {
-            boolean locked = lockService.lock(key, value);
+            // 1. 락 점유
+            locked = lockService.lock(key, value);
             if (!locked) {
-                throw new InterruptedException();
+                throw new IllegalStateException("이미 예매를 진행하고 있습니다. : " + key);
             }
-        } catch (InterruptedException e) {
-        } finally {
+
+            // 2. DB 저장
             createReservation(userId, reservationCreateRequestDto);
-            lockService.unlock(key);
+
+            // 3. DB Commit
+            transactionManager.commit(status);
+
+        } catch (Exception e) {
+            // 락 획득 실패, Spring Data 문제, 커밋-롤백 에러, InterruptedException, 기타 예외
+            if (!status.isCompleted()) {
+                transactionManager.rollback(status);
+            }
+            throw new RuntimeException("트랜잭션 실패", e);
+        } finally {
+            if (locked) {
+                try {
+                    lockService.unlock(key);
+                } catch (Exception e) {
+                    // 네트워크/서버 문제 (접속 끊김, 타임아웃), 락 키가 없거나 이미 만료됨, 클라이언트 라이브러리 문제
+                }
+            }
         }
     }
 }
