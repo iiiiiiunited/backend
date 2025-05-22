@@ -1,6 +1,7 @@
 package com.inity.tickenity.domain.reservation.service;
 
 import com.inity.tickenity.domain.common.dto.PageResponseDto;
+import com.inity.tickenity.domain.redisRock.service.LockService;
 import com.inity.tickenity.domain.reservation.dto.reqeust.ReservationCreateRequestDto;
 import com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse;
 import com.inity.tickenity.domain.reservation.dto.response.ReservationDetailResponseDto;
@@ -16,7 +17,6 @@ import com.inity.tickenity.domain.user.repository.UserRepository;
 import com.inity.tickenity.global.exception.BusinessException;
 import com.inity.tickenity.global.response.ResultCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +31,9 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final SeatInformationRepository seatInformationRepository;
+
+    // Lock Service
+    private final LockService lockService;
 
     /**
      * Reservation 을 생성
@@ -114,5 +117,25 @@ public class ReservationService {
         System.out.println(result);
         System.out.println("\n====================\n\n\n");
         return result;
+    }
+
+    // Lettuce 저장
+    @Transactional
+    public void createReservationWithLettuce(
+            Long userId,
+            ReservationCreateRequestDto reservationCreateRequestDto
+    ) {
+        String key = "lock:" + reservationCreateRequestDto.scheduleId() + reservationCreateRequestDto.seatInformationId();
+        String value = userId.toString();
+        try {
+            boolean locked = lockService.lock(key, value);
+            if (!locked) {
+                throw new InterruptedException();
+            }
+        } catch (InterruptedException e) {
+        } finally {
+            createReservation(userId, reservationCreateRequestDto);
+            lockService.unlock(key);
+        }
     }
 }
