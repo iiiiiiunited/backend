@@ -7,21 +7,20 @@ import com.inity.tickenity.domain.reservation.dto.response.ReservationDetailResp
 import com.inity.tickenity.domain.reservation.dto.response.ReservationIdResponseDto;
 import com.inity.tickenity.domain.reservation.entity.Reservation;
 import com.inity.tickenity.domain.reservation.repository.ReservationRepository;
-import com.inity.tickenity.domain.schedule.entity.Schedule;
 import com.inity.tickenity.domain.schedule.repository.ScheduleRepository;
-import com.inity.tickenity.domain.seat.entity.SeatInformation;
 import com.inity.tickenity.domain.seat.repository.SeatInformationRepository;
-import com.inity.tickenity.domain.user.entity.User;
 import com.inity.tickenity.domain.user.repository.UserRepository;
 import com.inity.tickenity.global.exception.BusinessException;
+import com.inity.tickenity.global.lock.LockService;
 import com.inity.tickenity.global.response.ResultCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +30,7 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final SeatInformationRepository seatInformationRepository;
+    private final LockService lockService;
 
     /**
      * Reservation 을 생성
@@ -44,23 +44,28 @@ public class ReservationService {
             Long userId,
             ReservationCreateRequestDto reservationCreateRequestDto
     ) {
-        User findUser = userRepository.findByIdOrElseThrow(userId);
-        Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId());
-        SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId());
+        String lockKey = "reservation:" + reservationCreateRequestDto.scheduleId() + ":" + reservationCreateRequestDto.seatInformationId();
+        AtomicReference<Reservation> savedReservation = new AtomicReference<>();
 
-        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
-            throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
-        }
+        lockService.executeWithLock(lockKey, () -> {
+            if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(
+                    reservationCreateRequestDto.scheduleId(),
+                    reservationCreateRequestDto.seatInformationId())) {
+                throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
+            }
 
-        Reservation reservation = Reservation.builder()
-                .user(findUser)
-                .schedule(findSchedule)
-                .seatInformation(findSeatInformation)
-                .build();
+            Reservation reservation = Reservation.builder()
+                    .user(userRepository.findByIdOrElseThrow(userId))
+                    .schedule(scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId()))
+                    .seatInformation(seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId()))
+                    .build();
 
-        Reservation saved = reservationRepository.save(reservation);
-        return ReservationIdResponseDto.of(saved.getId());
+            savedReservation.set(reservationRepository.save(reservation));
+        });
+
+        return ReservationIdResponseDto.of(savedReservation.get().getId());
     }
+
 
     /**
      * 로그인한 유저의 예매 내역을 모두 조회
