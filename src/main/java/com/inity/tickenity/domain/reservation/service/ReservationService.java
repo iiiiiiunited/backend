@@ -1,6 +1,7 @@
 package com.inity.tickenity.domain.reservation.service;
 
 import com.inity.tickenity.domain.common.dto.PageResponseDto;
+import com.inity.tickenity.domain.redisRock.aop.LettuceLock;
 import com.inity.tickenity.domain.redisRock.service.LockService;
 import com.inity.tickenity.domain.reservation.dto.reqeust.ReservationCreateRequestDto;
 import com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse;
@@ -21,7 +22,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final SeatInformationRepository seatInformationRepository;
+    private final PlatformTransactionManager transactionManager;
 
     // Lock Service
     private final LockService lockService;
@@ -157,5 +162,28 @@ public class ReservationService {
                 }
             }
         }
+    }
+
+    @LettuceLock(userId = "#userId", scheduleId = "#scheduleId", seatInformationId = "seatInformationId")
+    public void createReservationWithLettuceAop(
+            Long userId,
+            Long scheduleId,
+            Long seatInformationId
+    ) {
+        User findUser = userRepository.findByIdOrElseThrow(userId);
+        Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(scheduleId);
+        SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(seatInformationId);
+
+        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+            throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
+        }
+
+        Reservation reservation = Reservation.builder()
+                .user(findUser)
+                .schedule(findSchedule)
+                .seatInformation(findSeatInformation)
+                .build();
+
+        Reservation saved = reservationRepository.save(reservation);
     }
 }
