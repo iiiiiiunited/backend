@@ -19,6 +19,9 @@ public enum ResultCode {
     VALID_FAIL(HttpStatus.BAD_REQUEST, "유효성 검증에 실패하였습니다."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "NOT FOUND"),
 
+    // Lock Fail
+    LOCK_FAIL(HttpStatus.CONFLICT, "락 획득 실패"),
+
     /* 인증, 인가 */
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "아이디(로그인 이메일) 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요."),
     AUTH_ANNOTATION_USER_MISMATCH(HttpStatus.UNAUTHORIZED, "@Auth와 AuthUser 타입은 함께 사용되어야 합니다."),
