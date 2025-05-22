@@ -108,11 +108,9 @@ public class ReservationService {
     /**
      * Reservation 카운트 해주는 메서드
      */
-    public Long countReservation() {
-        Long result = reservationRepository.count();
+    public void countReservation() {
         System.out.println("\n\n\n====================\n");
-        System.out.println(result);
+        System.out.println(reservationRepository.count());
         System.out.println("\n====================\n\n\n");
-        return result;
     }
 }
