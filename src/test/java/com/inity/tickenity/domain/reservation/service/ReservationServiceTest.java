@@ -17,6 +17,7 @@ import com.inity.tickenity.domain.venue.repository.VenueRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.stream.IntStream;
 
 @Disabled("임시로 비활성화")
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ReservationServiceTest {
 
     @Autowired
@@ -43,7 +45,9 @@ class ReservationServiceTest {
     private ConcertRepository concertRepository;
 
     @BeforeEach
+
     void setUp() {
+
         // 1. 장소 저장
         Venue venue = venueRepository.save(new Venue("address", "name", 45, "tt"));
         // 2. 콘서트 저장
@@ -134,5 +138,9 @@ class ReservationServiceTest {
         // ---------------------------
         // 실패 나는 게 정상 입니다.
         Assertions.assertEquals(1L, reservationService.countReservation());
+        System.out.println("성공 수: " + successCount.get());
+        System.out.println("실패 수: " + failCount.get());
+        System.out.println("예약 건수: " + reservationService.countReservation());
+
     }
 }
