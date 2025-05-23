@@ -12,8 +12,9 @@ import com.inity.tickenity.domain.reservation.entity.Reservation;
 import com.inity.tickenity.domain.reservation.repository.ReservationRepository;
 import com.inity.tickenity.domain.schedule.entity.Schedule;
 import com.inity.tickenity.domain.schedule.repository.ScheduleRepository;
-import com.inity.tickenity.domain.seat.entity.SeatInformation;
-import com.inity.tickenity.domain.seat.repository.SeatInformationRepository;
+import com.inity.tickenity.domain.seat.entity.Seat;
+import com.inity.tickenity.domain.seat.enums.SeatStatus;
+import com.inity.tickenity.domain.seat.repository.SeatRepository;
 import com.inity.tickenity.domain.user.entity.User;
 import com.inity.tickenity.domain.user.repository.UserRepository;
 import com.inity.tickenity.global.exception.BusinessException;
@@ -35,8 +36,8 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
-    private final SeatInformationRepository seatInformationRepository;
     private final PlatformTransactionManager transactionManager;
+    private final SeatRepository seatRepository;
 
     // Lock Service
     private final LockService lockService;
@@ -54,19 +55,30 @@ public class ReservationService {
             ReservationCreateRequestDto reservationCreateRequestDto
     ) {
         User findUser = userRepository.findByIdOrElseThrow(userId);
-        Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId());
-        SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId());
 
-        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+        // 1. 좌석 테이블에 좌석이 등록 되어 있는지 확인.
+        Seat findSeat = seatRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatId());
+
+
+        // 2. 좌석 상태가 RESERVATIONS 인지 확인
+        if (findSeat.getSeatStatus() != SeatStatus.AVAILABLE) {
             throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
         }
 
+        // 3. 좌석 속 일정 정보 가져오기
+        Schedule findSchedule = scheduleRepository.findBySeatId(findSeat.getId());
+
+        // 4. Reservation 생성
         Reservation reservation = Reservation.builder()
                 .user(findUser)
                 .schedule(findSchedule)
-                .seatInformation(findSeatInformation)
+                .seat(findSeat)
                 .build();
 
+        // 5. 좌석 Status 변경
+        findSeat.updateSeatToReserved();
+
+        // 6. Reservation 저장
         Reservation saved = reservationRepository.save(reservation);
         return ReservationIdResponseDto.of(saved.getId());
     }
@@ -111,6 +123,8 @@ public class ReservationService {
     @Transactional
     public void cancelReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findByIdOrElseThrow(reservationId);
+        Seat seat = seatRepository.findByReservationId(reservationId);
+        seat.updateSeatToAvailable();
         reservation.updateStatusToCancelled();
     }
 
@@ -130,7 +144,7 @@ public class ReservationService {
             Long userId,
             ReservationCreateRequestDto reservationCreateRequestDto
     ) {
-        String key = "lock:" + reservationCreateRequestDto.scheduleId() + reservationCreateRequestDto.seatInformationId();
+        String key = "lock:" + reservationCreateRequestDto.seatId();
         String value = userId.toString();
 
         TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
@@ -165,49 +179,100 @@ public class ReservationService {
         }
     }
 
-    @LettuceLock(userId = "#userId", scheduleId = "#scheduleId", seatInformationId = "#seatInformationId")
-    public void createReservationWithLettuceAop(
+    @LettuceLock(userId = "#userId", seatId = "#seatId")
+    public ReservationIdResponseDto createReservationWithLettuceAop(
             Long userId,
-            Long scheduleId,
-            Long seatInformationId
+            Long seatId
     ) {
         User findUser = userRepository.findByIdOrElseThrow(userId);
-        Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(scheduleId);
-        SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(seatInformationId);
 
-        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+        // 1. 좌석 테이블에 좌석이 등록 되어 있는지 확인.
+        Seat findSeat = seatRepository.findByIdOrElseThrow(seatId);
+
+        // 2. 좌석 상태가 RESERVATIONS 인지 확인
+        if (findSeat.getSeatStatus() != SeatStatus.AVAILABLE) {
             throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
         }
 
+        // 3. 좌석 속 일정 정보 가져오기
+        Schedule findSchedule = scheduleRepository.findBySeatId(findSeat.getId());
+
+        // 4. Reservation 생성
         Reservation reservation = Reservation.builder()
                 .user(findUser)
                 .schedule(findSchedule)
-                .seatInformation(findSeatInformation)
+                .seat(findSeat)
                 .build();
 
+        // 5. 좌석 Status 변경
+        findSeat.updateSeatToReserved();
+
+        // 6. Reservation 저장
         Reservation saved = reservationRepository.save(reservation);
+        return ReservationIdResponseDto.of(saved.getId());
     }
 
-    @RedissonLock(userId = "#userId", scheduleId = "#scheduleId", seatInformationId = "seatInformationId")
-    public void createReservationWithRedisson(
+    @RedissonLock(userId = "#userId", seatId = "#seatId")
+    public ReservationIdResponseDto createReservationWithRedisson(
             Long userId,
-            Long scheduleId,
-            Long seatInformationId
+            Long seatId
     ) {
         User findUser = userRepository.findByIdOrElseThrow(userId);
-        Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(scheduleId);
-        SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(seatInformationId);
 
-        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+        // 1. 좌석 테이블에 좌석이 등록 되어 있는지 확인.
+        Seat findSeat = seatRepository.findByIdOrElseThrow(seatId);
+
+        // 2. 좌석 상태가 RESERVATIONS 인지 확인
+        if (findSeat.getSeatStatus() != SeatStatus.AVAILABLE) {
             throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
         }
 
+        // 3. 좌석 속 일정 정보 가져오기
+        Schedule findSchedule = scheduleRepository.findBySeatId(findSeat.getId());
+
+        // 4. Reservation 생성
         Reservation reservation = Reservation.builder()
                 .user(findUser)
                 .schedule(findSchedule)
-                .seatInformation(findSeatInformation)
+                .seat(findSeat)
                 .build();
 
+        // 5. 좌석 Status 변경
+        findSeat.updateSeatToReserved();
+
+        // 6. Reservation 저장
         Reservation saved = reservationRepository.save(reservation);
+        return ReservationIdResponseDto.of(saved.getId());
+    }
+
+    @Transactional
+    public ReservationIdResponseDto createReservationWithPessimisticLock(Long userId, ReservationCreateRequestDto dto) {
+        User findUser = userRepository.findByIdOrElseThrow(userId);
+
+        // 1. 좌석 테이블에 좌석이 등록 되어 있는지 확인.
+        Seat findSeat = seatRepository.findByIdWithPessimisticLock(dto.seatId()).orElseThrow(() ->
+                new BusinessException(ResultCode.NOT_FOUND, "해당 Entity를 찾을 수 없습니다. id = " + dto.seatId()));
+
+        // 2. 좌석 상태가 RESERVATIONS 인지 확인
+        if (findSeat.getSeatStatus() != SeatStatus.AVAILABLE) {
+            throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
+        }
+
+        // 3. 좌석 속 일정 정보 가져오기
+        Schedule findSchedule = scheduleRepository.findBySeatId(findSeat.getId());
+
+        // 4. Reservation 생성
+        Reservation reservation = Reservation.builder()
+                .user(findUser)
+                .schedule(findSchedule)
+                .seat(findSeat)
+                .build();
+
+        // 5. 좌석 Status 변경
+        findSeat.updateSeatToReserved();
+
+        // 6. Reservation 저장
+        Reservation saved = reservationRepository.save(reservation);
+        return ReservationIdResponseDto.of(saved.getId());
     }
 }
