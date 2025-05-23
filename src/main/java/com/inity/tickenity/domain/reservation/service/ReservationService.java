@@ -15,19 +15,17 @@ import com.inity.tickenity.domain.user.entity.User;
 import com.inity.tickenity.domain.user.repository.UserRepository;
 import com.inity.tickenity.global.exception.BusinessException;
 import com.inity.tickenity.global.lock.LockService;
+import com.inity.tickenity.global.lock.LettuceLock;
+import com.inity.tickenity.global.lock.RedissonLock;
+import com.inity.tickenity.global.lock.RedissonLockService;
 import com.inity.tickenity.global.response.ResultCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +35,7 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final SeatInformationRepository seatInformationRepository;
+    private final RedissonLockService redissonLockService;
     private final LockService lockService;
 
     /**
@@ -47,51 +46,47 @@ public class ReservationService {
      * @return ReservationIdResponseDto
      */
     @Transactional
-    public ReservationIdResponseDto createReservation(
+    @LettuceLock(key = "'reservation:' + #reservationCreateRequestDto.scheduleId() + ':' + #reservationCreateRequestDto.seatInformationId()", timeout = 3000)
+    public ReservationIdResponseDto createReservationWithLettuce(
             Long userId,
             ReservationCreateRequestDto reservationCreateRequestDto
     ) {
-        String lockKey = "reservation:" + reservationCreateRequestDto.scheduleId() + ":" + reservationCreateRequestDto.seatInformationId();
-        String uuid = UUID.randomUUID().toString();
-        AtomicReference<Reservation> savedReservation = new AtomicReference<>();
+        User findUser = userRepository.findByIdOrElseThrow(userId);
+        Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId());
+        SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId());
 
-        // 2. 락 점유
-        boolean locked = lockService.tryLock(lockKey, uuid, 3000);
-        if (!locked) {
-            throw new BusinessException(ResultCode.LOCK_FAIL, "락 획득 실패");
+        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+            throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
         }
 
-        try {
-            // 3. 비즈니스 로직 실행
-            if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(
-                    reservationCreateRequestDto.scheduleId(),
-                    reservationCreateRequestDto.seatInformationId())) {
+        Reservation reservation = Reservation.builder()
+                .user(findUser)
+                .schedule(findSchedule)
+                .seatInformation(findSeatInformation)
+                .build();
+
+        Reservation saved = reservationRepository.save(reservation);
+        return ReservationIdResponseDto.of(saved.getId());
+    }
+
+
+    @Transactional
+    @RedissonLock(key = "'reservation:' + #reservationCreateRequestDto.scheduleId() + ':' + #reservationCreateRequestDto.seatInformationId()", waitTime = 3000, leaseTime = 2000)
+    public ReservationIdResponseDto createReservationWithRedisson(Long userId, ReservationCreateRequestDto reservationCreateRequestDto) {
+        String lockKey = "reservation:" + reservationCreateRequestDto.scheduleId() + ":" + reservationCreateRequestDto.seatInformationId();
+        return redissonLockService.executeWithLock(lockKey, 3000, 2000, () -> {
+            if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(reservationCreateRequestDto.scheduleId(), reservationCreateRequestDto.seatInformationId())) {
                 throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
             }
-
             Reservation reservation = Reservation.builder()
                     .user(userRepository.findByIdOrElseThrow(userId))
                     .schedule(scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId()))
                     .seatInformation(seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId()))
                     .build();
 
-            savedReservation.set(reservationRepository.save(reservation));
-
-            // 5. 커밋 후 락 해제 예약
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    lockService.unlock(lockKey, uuid);
-                }
-            });
-
-        } catch (Exception e) {
-            // 예외 발생 시 즉시 락 해제 (rollback 되더라도 unlock은 반드시 필요)
-            lockService.unlock(lockKey, uuid);
-            throw e;
-        }
-
-        return ReservationIdResponseDto.of(savedReservation.get().getId());
+            Reservation saved = reservationRepository.save(reservation);
+            return ReservationIdResponseDto.of(saved.getId());
+        });
     }
 
     /**
