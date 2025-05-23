@@ -212,7 +212,7 @@ public class ReservationService {
         return ReservationIdResponseDto.of(saved.getId());
     }
 
-    @RedissonLock(userId = "#userId", seatId = "#seatId")
+    @RedissonLock(seatId = "#seatId")
     public ReservationIdResponseDto createReservationWithRedisson(
             Long userId,
             Long seatId

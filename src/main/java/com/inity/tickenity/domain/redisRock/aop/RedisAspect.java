@@ -6,8 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -27,7 +33,26 @@ public class RedisAspect {
 
     @Around("@annotation(lettuceLock)")
     public Object lettuceLock(ProceedingJoinPoint joinPoint, LettuceLock lettuceLock) throws Throwable {
-        String key = "lock:" + lettuceLock.seatId();
+
+        // 메서드 시그니처
+        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        String[] parameterNames = methodSignature.getParameterNames(); // 파라미터 이름 배열
+        Object[] args = joinPoint.getArgs(); // 실제 파라미터 값 배열
+
+        // SpEL 파서와 컨텍스트 준비
+        SpelExpressionParser parser = new SpelExpressionParser();
+        StandardEvaluationContext context = new StandardEvaluationContext();
+
+        // 파라미터 이름과 값 context에 세팅
+        for (int i = 0; i < parameterNames.length; i++) {
+            context.setVariable(parameterNames[i], args[i]);
+        }
+
+        // SpEL 평가
+        String seatId = parser.parseExpression(lettuceLock.seatId()).getValue(context, String.class);
+        String userId = parser.parseExpression(lettuceLock.userId()).getValue(context, String.class);
+
+        String key = "lettuceLock:" + lettuceLock.seatId();
         boolean locked = false;
         try {
             long start = System.currentTimeMillis();
@@ -66,7 +91,24 @@ public class RedisAspect {
 
     @Around("@annotation(redissonLock)")
     public Object redissonLock(ProceedingJoinPoint joinPoint, RedissonLock redissonLock) throws Throwable {
-        String key = "lock:" + redissonLock.seatId();
+        // 메서드 시그니처
+        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        String[] parameterNames = methodSignature.getParameterNames(); // 파라미터 이름 배열
+        Object[] args = joinPoint.getArgs(); // 실제 파라미터 값 배열
+
+        // SpEL 파서와 컨텍스트 준비
+        SpelExpressionParser parser = new SpelExpressionParser();
+        StandardEvaluationContext context = new StandardEvaluationContext();
+
+        // 파라미터 이름과 값 context에 세팅
+        for (int i = 0; i < parameterNames.length; i++) {
+            context.setVariable(parameterNames[i], args[i]);
+        }
+
+        // SpEL 평가
+        String seatId = parser.parseExpression(redissonLock.seatId()).getValue(context, String.class);
+
+        String key = "redissonLock:" + seatId;
         long waitTime = 5; // 락 대기 시간
         long leaseTime = 10; // 점유 시간
 
