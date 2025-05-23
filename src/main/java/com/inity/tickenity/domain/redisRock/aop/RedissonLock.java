@@ -9,6 +9,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RedissonLock {
     String userId();
-    String scheduleId();
-    String seatInformationId();
+    String seatId();
 }

@@ -27,7 +27,7 @@ public class RedisAspect {
 
     @Around("@annotation(lettuceLock)")
     public Object lettuceLock(ProceedingJoinPoint joinPoint, LettuceLock lettuceLock) throws Throwable {
-        String key = "lock:" + lettuceLock.scheduleId() + lettuceLock.seatInformationId();
+        String key = "lock:" + lettuceLock.seatId();
         boolean locked = false;
         try {
             long start = System.currentTimeMillis();
@@ -66,7 +66,7 @@ public class RedisAspect {
 
     @Around("@annotation(redissonLock)")
     public Object redissonLock(ProceedingJoinPoint joinPoint, RedissonLock redissonLock) throws Throwable {
-        String key = "lock:" + redissonLock.scheduleId() + redissonLock.seatInformationId();
+        String key = "lock:" + redissonLock.seatId();
         long waitTime = 5; // 락 대기 시간
         long leaseTime = 10; // 점유 시간
 

@@ -7,6 +7,5 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface LettuceLock {
     String userId();
-    String scheduleId();
-    String seatInformationId();
+    String seatId();
 }
