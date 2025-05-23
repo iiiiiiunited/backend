@@ -30,6 +30,39 @@ public class ReservationController {
         );
     }
 
+    @PostMapping("/lettuceAop")
+    public BaseResponse<ReservationIdResponseDto> createReservationWithLettuceAop(
+            @Auth AuthUser authUser,
+            @RequestBody ReservationCreateRequestDto reservationCreateRequestDto
+    ) {
+        return BaseResponse.success(
+                reservationService.createReservationWithLettuceAop(authUser.id(), reservationCreateRequestDto.seatId()),
+                ResultCode.CREATED
+        );
+    }
+
+    @PostMapping("/redisson")
+    public BaseResponse<ReservationIdResponseDto> createReservationWithRedisson(
+            @Auth AuthUser authUser,
+            @RequestBody ReservationCreateRequestDto reservationCreateRequestDto
+    ) {
+        return BaseResponse.success(
+                reservationService.createReservationWithRedisson(authUser.id(), reservationCreateRequestDto.seatId()),
+                ResultCode.CREATED
+        );
+    }
+
+    @PostMapping("/pessimisticLock")
+    public BaseResponse<ReservationIdResponseDto> createReservationWithPessimisticLock(
+            @Auth AuthUser authUser,
+            @RequestBody ReservationCreateRequestDto reservationCreateRequestDto
+    ) {
+        return BaseResponse.success(
+                reservationService.createReservationWithPessimisticLock(authUser.id(), reservationCreateRequestDto),
+                ResultCode.CREATED
+        );
+    }
+
     @GetMapping
     public BaseResponse<PageResponseDto<MyReservationResponse>> getMyReservation(
             @Auth AuthUser authUser,
