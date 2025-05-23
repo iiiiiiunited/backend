@@ -20,7 +20,8 @@ import com.inity.tickenity.domain.venue.repository.VenueRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,6 +50,9 @@ class ReservationServiceTest {
     private ConcertRepository concertRepository;
     @Autowired
     private SeatRepository seatRepository;
+
+    @MockitoBean
+    private RedisTemplate<String, Object> redisTemplate;
 
     @BeforeEach
     void setUp() {
