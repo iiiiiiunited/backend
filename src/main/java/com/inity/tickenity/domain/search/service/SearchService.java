@@ -26,13 +26,23 @@ public class SearchService {
         );
     }
 
-    @Cacheable(value = "concertTitles", key = "#keyword")
-    public PageResponseDto<SearchConcertResultResponse> findByKeywordWithCache(String keyword, Pageable pageable) {
+    @Cacheable(cacheManager = "localCacheManager", cacheNames = "concertTitlesLocal", key = "#keyword")
+    public PageResponseDto<SearchConcertResultResponse> findByKeywordWithLocalCache(String keyword, Pageable pageable) {
 
         Page<Concert> pages = concertRepository.findByTitleContaining(keyword, pageable);
         return PageResponseDto.toDto(
                 pages.map(SearchConcertResultResponse::fromEntity)
         );
     }
+
+    @Cacheable(cacheManager = "redisCacheManager", cacheNames = "concertTitlesRedis", key = "#keyword")
+    public PageResponseDto<SearchConcertResultResponse> findByKeywordWithRedis(String keyword, Pageable pageable) {
+
+        Page<Concert> pages = concertRepository.findByTitleContaining(keyword, pageable);
+        return PageResponseDto.toDto(
+                pages.map(SearchConcertResultResponse::fromEntity)
+        );
+    }
+
 
 }

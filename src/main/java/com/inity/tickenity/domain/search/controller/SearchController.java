@@ -35,7 +35,17 @@ public class SearchController {
             @RequestParam String keyword,
             @PageableDefault Pageable pageable
     ) {
-        PageResponseDto<SearchConcertResultResponse> result = searchService.findByKeywordWithCache(keyword, pageable);
+        PageResponseDto<SearchConcertResultResponse> result = searchService.findByKeywordWithLocalCache(keyword, pageable);
+
+        return BaseResponse.success(result, ResultCode.OK);
+    }
+
+    @GetMapping("/v3")
+    public BaseResponse<PageResponseDto<SearchConcertResultResponse>> getConcertByKeywordV3(
+            @RequestParam String keyword,
+            @PageableDefault Pageable pageable
+    ) {
+        PageResponseDto<SearchConcertResultResponse> result = searchService.findByKeywordWithRedis(keyword, pageable);
 
         return BaseResponse.success(result, ResultCode.OK);
     }
