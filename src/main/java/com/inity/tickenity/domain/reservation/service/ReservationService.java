@@ -2,6 +2,7 @@ package com.inity.tickenity.domain.reservation.service;
 
 import com.inity.tickenity.domain.common.dto.PageResponseDto;
 import com.inity.tickenity.domain.redisRock.aop.LettuceLock;
+import com.inity.tickenity.domain.redisRock.aop.RedissonLock;
 import com.inity.tickenity.domain.redisRock.service.LockService;
 import com.inity.tickenity.domain.reservation.dto.reqeust.ReservationCreateRequestDto;
 import com.inity.tickenity.domain.reservation.dto.response.MyReservationResponse;
@@ -164,8 +165,31 @@ public class ReservationService {
         }
     }
 
-    @LettuceLock(userId = "#userId", scheduleId = "#scheduleId", seatInformationId = "seatInformationId")
+    @LettuceLock(userId = "#userId", scheduleId = "#scheduleId", seatInformationId = "#seatInformationId")
     public void createReservationWithLettuceAop(
+            Long userId,
+            Long scheduleId,
+            Long seatInformationId
+    ) {
+        User findUser = userRepository.findByIdOrElseThrow(userId);
+        Schedule findSchedule = scheduleRepository.findByIdOrElseThrow(scheduleId);
+        SeatInformation findSeatInformation = seatInformationRepository.findByIdOrElseThrow(seatInformationId);
+
+        if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(findSchedule.getId(), findSeatInformation.getId())) {
+            throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
+        }
+
+        Reservation reservation = Reservation.builder()
+                .user(findUser)
+                .schedule(findSchedule)
+                .seatInformation(findSeatInformation)
+                .build();
+
+        Reservation saved = reservationRepository.save(reservation);
+    }
+
+    @RedissonLock(userId = "#userId", scheduleId = "#scheduleId", seatInformationId = "seatInformationId")
+    public void createReservationWithRedisson(
             Long userId,
             Long scheduleId,
             Long seatInformationId
