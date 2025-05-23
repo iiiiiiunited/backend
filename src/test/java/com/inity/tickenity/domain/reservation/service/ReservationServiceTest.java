@@ -67,13 +67,12 @@ class ReservationServiceTest {
         IntStream.range(0, 100).forEach(i -> {
             userRepository.save(new User(i + "test@test.com", "pwd", "test", "000-0000-0000", UserRole.USER));
         });
-
     }
 
     @Disabled("임시로 비활성화")
     @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - Callable")
     @Test
-    void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrently() throws InterruptedException {
+    void concurrencyTestWithCallable() throws InterruptedException {
         System.out.println("\n\n\n\n[createReservation Test]");
         // ---------------------------
         // given: 예약 요청 정보 및 스레드풀 설정
@@ -104,7 +103,7 @@ class ReservationServiceTest {
     @Disabled("임시로 비활성화")
     @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - CountDownLatch")
     @Test
-    void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrentlyWithCountDownLatch() throws InterruptedException {
+    void concurrencyTestWithCountDownLatch() throws InterruptedException {
         System.out.println("\n\n\n\n[createReservation Test with CountDownLatch]");
 
         // ---------------------------
@@ -150,7 +149,7 @@ class ReservationServiceTest {
     @Disabled("임시로 비활성화")
     @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - With Redis Lettuce")
     @Test
-    void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrentlyWithLettuce() throws InterruptedException {
+    void concurrencyTestWithLettuce() throws InterruptedException {
         System.out.println("\n\n\n\n[createReservation Test - Lettuce]");
         // ---------------------------
         // given: 예약 요청 정보 및 스레드풀 설정
@@ -195,7 +194,7 @@ class ReservationServiceTest {
     @Disabled("임시로 비활성화")
     @DisplayName("동일 좌석에 대한 동시 예약 시 하나만 성공해야 한다 - With Redis Lettuce Aop")
     @Test
-    void shouldAllowOnlyOneReservationWhenMultipleUsersReserveSameSeatConcurrentlyWithLettuceAop() throws InterruptedException {
+    void concurrencyTestWithLettuceAop() throws InterruptedException {
         System.out.println("\n\n\n\n[createReservation Test - Lettuce Aop]");
         // ---------------------------
         // given: 예약 요청 정보 및 스레드풀 설정
