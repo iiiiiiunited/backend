@@ -51,9 +51,6 @@ class ReservationServiceTest {
     @Autowired
     private SeatRepository seatRepository;
 
-    @MockitoBean
-    private RedisTemplate<String, Object> redisTemplate;
-
     @BeforeEach
     void setUp() {
         // 1. 장소 저장
