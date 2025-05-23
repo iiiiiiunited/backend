@@ -1,0 +1,12 @@
+package com.inity.tickenity.global.lock;
+
+import java.lang.annotation.*;
+
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface RedissonLock {
+    String key();                 // key의 SpEL 표현식
+    long waitTime() default 3000; // 락 대기 시간 (ms)
+    long leaseTime() default 2000; // 락 점유 시간 (ms)
+}

@@ -14,14 +14,18 @@ import com.inity.tickenity.domain.seat.repository.SeatInformationRepository;
 import com.inity.tickenity.domain.user.entity.User;
 import com.inity.tickenity.domain.user.repository.UserRepository;
 import com.inity.tickenity.global.exception.BusinessException;
+import com.inity.tickenity.global.lock.LockService;
+import com.inity.tickenity.global.lock.LettuceLock;
+import com.inity.tickenity.global.lock.RedissonLock;
+import com.inity.tickenity.global.lock.RedissonLockService;
 import com.inity.tickenity.global.response.ResultCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,8 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final SeatInformationRepository seatInformationRepository;
+    private final RedissonLockService redissonLockService;
+    private final LockService lockService;
 
     /**
      * Reservation 을 생성
@@ -40,7 +46,8 @@ public class ReservationService {
      * @return ReservationIdResponseDto
      */
     @Transactional
-    public ReservationIdResponseDto createReservation(
+    @LettuceLock(key = "'reservation:' + #reservationCreateRequestDto.scheduleId() + ':' + #reservationCreateRequestDto.seatInformationId()", timeout = 3000)
+    public ReservationIdResponseDto createReservationWithLettuce(
             Long userId,
             ReservationCreateRequestDto reservationCreateRequestDto
     ) {
@@ -60,6 +67,26 @@ public class ReservationService {
 
         Reservation saved = reservationRepository.save(reservation);
         return ReservationIdResponseDto.of(saved.getId());
+    }
+
+
+    @Transactional
+    @RedissonLock(key = "'reservation:' + #reservationCreateRequestDto.scheduleId() + ':' + #reservationCreateRequestDto.seatInformationId()", waitTime = 3000, leaseTime = 2000)
+    public ReservationIdResponseDto createReservationWithRedisson(Long userId, ReservationCreateRequestDto reservationCreateRequestDto) {
+        String lockKey = "reservation:" + reservationCreateRequestDto.scheduleId() + ":" + reservationCreateRequestDto.seatInformationId();
+        return redissonLockService.executeWithLock(lockKey, 3000, 2000, () -> {
+            if (reservationRepository.existsBySchedule_IdAndSeatInformation_Id(reservationCreateRequestDto.scheduleId(), reservationCreateRequestDto.seatInformationId())) {
+                throw new BusinessException(ResultCode.DB_FAIL, "이미 예약된 좌석입니다.");
+            }
+            Reservation reservation = Reservation.builder()
+                    .user(userRepository.findByIdOrElseThrow(userId))
+                    .schedule(scheduleRepository.findByIdOrElseThrow(reservationCreateRequestDto.scheduleId()))
+                    .seatInformation(seatInformationRepository.findByIdOrElseThrow(reservationCreateRequestDto.seatInformationId()))
+                    .build();
+
+            Reservation saved = reservationRepository.save(reservation);
+            return ReservationIdResponseDto.of(saved.getId());
+        });
     }
 
     /**

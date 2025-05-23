@@ -19,13 +19,24 @@ import org.springframework.web.bind.annotation.*;
 public class ReservationController {
     private final ReservationService reservationService;
 
-    @PostMapping
-    public BaseResponse<ReservationIdResponseDto> createReservation(
+    @PostMapping("/lettuce")
+    public BaseResponse<ReservationIdResponseDto> createReservationWithLettuce(
             @Auth AuthUser authUser,
             @RequestBody ReservationCreateRequestDto reservationCreateRequestDto
     ) {
         return BaseResponse.success(
-                reservationService.createReservation(authUser.id(), reservationCreateRequestDto),
+                reservationService.createReservationWithLettuce(authUser.id(), reservationCreateRequestDto),
+                ResultCode.CREATED
+        );
+    }
+
+    @PostMapping("/redisson")
+    public BaseResponse<ReservationIdResponseDto> createReservationWithRedisson(
+            @Auth AuthUser authUser,
+            @RequestBody ReservationCreateRequestDto reservationCreateRequestDto
+    ) {
+        return BaseResponse.success(
+                reservationService.createReservationWithRedisson(authUser.id(), reservationCreateRequestDto),
                 ResultCode.CREATED
         );
     }

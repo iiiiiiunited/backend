@@ -55,6 +55,14 @@ dependencies {
 
 	// bcrypt
 	implementation 'at.favre.lib:bcrypt:0.10.2'
+
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'io.lettuce:lettuce-core:6.3.0.RELEASE'
+
+	// Redisson 의존성 추가
+	implementation 'org.redisson:redisson-spring-boot-starter:3.23.5'
+
 }
 
 tasks.named('test') {
