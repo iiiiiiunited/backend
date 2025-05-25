@@ -4,6 +4,7 @@ import com.inity.tickenity.domain.common.entity.BaseTimeEntity;
 import com.inity.tickenity.domain.reservation.enums.PaymentStatus;
 import com.inity.tickenity.domain.reservation.enums.ReservationStatus;
 import com.inity.tickenity.domain.schedule.entity.Schedule;
+import com.inity.tickenity.domain.seat.entity.Seat;
 import com.inity.tickenity.domain.seat.entity.SeatInformation;
 import com.inity.tickenity.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -33,8 +34,8 @@ public class Reservation extends BaseTimeEntity {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "seat_information_id")
-    private SeatInformation seatInformation;
+    @JoinColumn(name = "seat_id")
+    private Seat seat;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id", nullable = false)
@@ -42,12 +43,12 @@ public class Reservation extends BaseTimeEntity {
 
     // Builder
     @Builder
-    public Reservation(User user, Schedule schedule, SeatInformation seatInformation) {
+    public Reservation(User user, Schedule schedule, Seat seat) {
         this.user = user;
         this.reservationStatus = ReservationStatus.PENDING;
         this.paymentStatus = PaymentStatus.PENDING;
         this.schedule = schedule;
-        this.seatInformation = seatInformation;
+        this.seat = seat;
     }
 
     // Reservation Status 수정

@@ -4,8 +4,6 @@ import jakarta.validation.constraints.NotEmpty;
 
 public record ReservationCreateRequestDto(
         @NotEmpty
-        Long scheduleId,
-        @NotEmpty
-        Long seatInformationId
+        Long seatId
 ) {
 }
