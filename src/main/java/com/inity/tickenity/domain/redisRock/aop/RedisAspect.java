@@ -52,18 +52,18 @@ public class RedisAspect {
         String seatId = parser.parseExpression(lettuceLock.seatId()).getValue(context, String.class);
         String userId = parser.parseExpression(lettuceLock.userId()).getValue(context, String.class);
 
-        String key = "lettuceLock:" + lettuceLock.seatId();
+        String key = "lettuceLock:" + seatId;
         boolean locked = false;
         try {
             long start = System.currentTimeMillis();
-            while (!(locked = lockRedisRepository.lock(key, lettuceLock.userId()))) {
+            while (!(locked = lockRedisRepository.lock(key, userId))) {
                 if (System.currentTimeMillis() - start > 3000) {
                     throw new IllegalStateException("락 획득 실패: key = " + key);
                 }
                 Thread.sleep(100);
             }
 
-            log.info("락 획득 성공: key = {}, userId = {}", key, lettuceLock.userId());
+            log.info("락 획득 성공: key = {}, userId = {}", key, userId);
 
             TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
             transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
