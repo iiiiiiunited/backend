@@ -147,7 +147,8 @@ public class ReservationService {
         String key = "lock:" + reservationCreateRequestDto.seatId();
         String value = userId.toString();
 
-        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+        TransactionStatus status = null;
+
         boolean locked = false;
         try {
             // 1. 락 점유
@@ -156,7 +157,10 @@ public class ReservationService {
                 throw new IllegalStateException("이미 예매를 진행하고 있습니다. : " + key);
             }
 
-            // 2. DB 저장
+            // 2. 트랜잭션 시작
+            status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+
+            // 3. 비즈니스 로직 시작
             createReservation(userId, reservationCreateRequestDto);
 
             // 3. DB Commit
