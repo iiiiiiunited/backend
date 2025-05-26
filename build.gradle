@@ -56,6 +56,10 @@ dependencies {
 	// bcrypt
 	implementation 'at.favre.lib:bcrypt:0.10.2'
 
+	// cache
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'com.github.ben-manes.caffeine:caffeine'
+
 	// Redisson
 	implementation 'org.redisson:redisson-spring-boot-starter:3.27.1'
 }
