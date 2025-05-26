@@ -6,23 +6,15 @@ import java.util.List;
 import com.inity.tickenity.domain.concert.enums.Genre;
 import com.inity.tickenity.domain.concertvenue.ConcertVenue;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "concerts")
+@Table(name = "concerts", indexes = {
+		@Index(name = "idx_concert_title", columnList = "title")
+})
 @NoArgsConstructor
 public class Concert {
 	@Id

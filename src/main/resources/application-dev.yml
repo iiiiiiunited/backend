@@ -6,10 +6,14 @@ spring:
         username: root
         password: 1234
         driver-class-name: com.mysql.cj.jdbc.Driver
+        
+#        hikari:
+#            maximum-pool-size: 50     # 동시 처리량에 맞춰 풀 크기 확장
+            
     jpa:
         hibernate:
             ddl-auto: update
-        show-sql: true
+        show-sql: false
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.MySQL8Dialect
@@ -17,6 +21,12 @@ spring:
         redis:
             host: localhost
             port: 6379
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: prometheus
 
 jwt:
     secret:

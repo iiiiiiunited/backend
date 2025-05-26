@@ -17,8 +17,6 @@ public class JSONResult {
 
     private int status; // HTTP 상태 코드
 
-    private String code; // 응답 코드
-
     private String message; // 응답 메시지
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")

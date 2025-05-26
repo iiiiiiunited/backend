@@ -12,12 +12,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
 public class JwtFilter implements Filter {
 
     private final JwtUtil jwtUtil;
+
+    private static final List<String> WHITE_LIST = List.of(
+            "/auth",
+            "/health",
+            "/search",
+            "/actuator"
+    );
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -31,7 +39,7 @@ public class JwtFilter implements Filter {
 
         String url = httpRequest.getRequestURI();
 
-        if (url.startsWith("/auth") || url.startsWith("/health")) {
+        if (isWhitelisted(url)) {
             chain.doFilter(request, response);
             return;
         }
@@ -88,4 +96,10 @@ public class JwtFilter implements Filter {
     public void destroy() {
         Filter.super.destroy();
     }
+
+    private boolean isWhitelisted(String url) {
+        return WHITE_LIST.stream()
+                .anyMatch(url::startsWith);
+    }
+
 }

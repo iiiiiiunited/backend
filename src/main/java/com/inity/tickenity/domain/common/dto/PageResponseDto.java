@@ -2,11 +2,14 @@ package com.inity.tickenity.domain.common.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.extern.jackson.Jacksonized;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 @Builder
+@Jacksonized
 @Getter
 public class PageResponseDto<T> {
 
